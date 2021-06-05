@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-mod router;
+pub mod router;
 use router::*;
 
 pub fn main() {
