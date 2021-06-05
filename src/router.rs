@@ -54,8 +54,15 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_route_require_leading_slash() {
+    fn test_route_requires_leading_slash() {
         let mut router = Router::new();
         assert_ne!(router.route(HttpVerb::Get, "this/is/a/test"), Ok(()));
+    }
+
+    #[test]
+    fn test_route_trailing_slash_optional() {
+        let mut router = Router::new();
+        assert_eq!(router.route(HttpVerb::Get, "/this/is/a/test/"), Ok(()));
+        assert_eq!(router.route(HttpVerb::Get, "/this/is/a/test"), Ok(()));
     }
 }
