@@ -1,31 +1,61 @@
-extern crate trie_rs;
-use trie_rs::{TrieBuilder, Trie};
+use lazy_static::lazy_static;
+use regex::Regex;
+use std::collections::*;
 
-// idea: you don't need a trie! just use a hash
-// maybe?
-
-pub struct RouterBuilder {
-  trie_builder: TrieBuilder<&'static str>,
+#[derive(Debug, PartialEq, Clone, Hash)]
+pub enum HttpVerb {
+    Get,
+    Post,
+    Put,
+    Patch,
+    Delete,
+    Head,
 }
 
-impl RouterBuilder {
-  pub fn new() -> RouterBuilder {
-    RouterBuilder {
-      trie_builder: TrieBuilder::new()
-    }
-  }
-
-  pub fn build(&self) -> Router {
-    Router {
-      trie: self.trie_builder.build()
-    }
-  }
+#[derive(Debug, PartialEq, Clone, Hash)]
+enum RouteVar {
+    Int(String),
+    Float(String),
+    String(String),
 }
 
+#[derive(Debug, PartialEq, Clone, Hash)]
+struct Route {
+    path: String,
+    vars: Vec<RouteVar>,
+    verb: HttpVerb,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Router {
-  trie: Trie<&'static str>,
+    routes: HashMap<String, Route>,
 }
 
 impl Router {
+    pub fn new() -> Router {
+        Router {
+            routes: HashMap::new(),
+        }
+    }
 
+    pub fn route(&mut self, verb: HttpVerb, path: &'static str) -> Result<(), &'static str> {
+        lazy_static! {
+            static ref REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
+        }
+        if !REG.is_match(path) {
+            return Err("invalid route format!");
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_route_require_leading_slash() {
+        let mut router = Router::new();
+        assert_ne!(router.route(HttpVerb::Get, "this/is/a/test"), Ok(()));
+    }
 }
