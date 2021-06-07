@@ -3,7 +3,7 @@ use regex::Regex;
 use std::collections::*;
 
 #[derive(Debug, PartialEq, Clone, Hash)]
-pub enum HttpVerb {
+pub enum Verb {
     Get,
     Post,
     Put,
@@ -23,7 +23,7 @@ enum RouteVar {
 struct Route {
     path: String,
     vars: Vec<RouteVar>,
-    verb: HttpVerb,
+    verb: Verb,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -38,7 +38,7 @@ impl Router {
         }
     }
 
-    pub fn route(&mut self, verb: HttpVerb, path: &'static str) -> Result<(), &'static str> {
+    pub fn route(&mut self, verb: Verb, path: &'static str) -> Result<(), &'static str> {
         lazy_static! {
             static ref REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
         }
@@ -56,13 +56,13 @@ mod test {
     #[test]
     fn test_route_requires_leading_slash() {
         let mut router = Router::new();
-        assert_ne!(router.route(HttpVerb::Get, "this/is/a/test"), Ok(()));
+        assert_ne!(router.route(Verb::Get, "this/is/a/test"), Ok(()));
     }
 
     #[test]
     fn test_route_trailing_slash_optional() {
         let mut router = Router::new();
-        assert_eq!(router.route(HttpVerb::Get, "/this/is/a/test/"), Ok(()));
-        assert_eq!(router.route(HttpVerb::Get, "/this/is/a/test"), Ok(()));
+        assert_eq!(router.route(Verb::Get, "/this/is/a/test/"), Ok(()));
+        assert_eq!(router.route(Verb::Get, "/this/is/a/test"), Ok(()));
     }
 }
