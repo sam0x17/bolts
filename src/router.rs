@@ -52,12 +52,8 @@ impl Router {
         }
     }
 
-    pub fn routes(&self) -> Vec<Route> {
-        let mut vec = Vec::new();
-        for route in self.routes.values() {
-            vec.push(route.clone());
-        }
-        vec
+    pub fn routes(&self) -> hash_map::Values<'_, RouteKey, Route> {
+        self.routes.values()
     }
 
     pub fn route(&mut self, verb: Verb, path: &'static str) -> Result<(), &'static str> {
@@ -141,7 +137,7 @@ mod test {
             .unwrap();
         let routes = router.routes();
         assert_eq!(routes.len(), 1);
-        let route = &routes[0];
+        let route = router.routes().nth(0).unwrap();
         assert_eq!(route.verb, Verb::Patch);
         assert_eq!(route.vars.len(), 4);
         assert_eq!(route.vars[0], RouteVar::String("string"));
