@@ -42,39 +42,26 @@ pub struct Route {
     verb: Verb,
 }
 
-pub struct RouteBuilder {
+pub struct RouteBuilder<'a> {
     domain: Option<&'static str>,
     verb: Verb,
-    path: Option<&'static str>,
+    path: &'static str,
+    router: &'a mut Router,
 }
 
-impl RouteBuilder {
-    pub fn domain(&self, domain: &'static str) -> RouteBuilder {
-        RouteBuilder {
-            domain: Some(domain),
-            verb: self.verb.clone(),
-            path: self.path.clone(),
-        }
+impl<'a> RouteBuilder<'a> {
+    pub fn domain(mut self, domain: &'static str) -> RouteBuilder<'a> {
+        self.domain = Some(domain);
+        self
     }
 
-    pub fn verb(&self, verb: Verb) -> RouteBuilder {
-        RouteBuilder {
-            domain: self.domain.clone(),
-            verb: verb,
-            path: self.path.clone(),
-        }
+    pub fn verb(mut self, verb: Verb) -> RouteBuilder<'a> {
+        self.verb = verb;
+        self
     }
 
-    pub fn path(&self, path: &'static str) -> RouteBuilder {
-        RouteBuilder {
-            domain: self.domain.clone(),
-            verb: self.verb.clone(),
-            path: Some(path),
-        }
-    }
-
-    pub fn apply(&mut self, router: &mut Router) {
-        router.route(self.domain.clone(), self.verb.clone(), self.path.unwrap().clone());
+    pub fn route(self) -> Result<(), &'static str> {
+        self.router.route(self.domain, self.verb, self.path)
     }
 }
 
@@ -90,11 +77,12 @@ impl Router {
         }
     }
 
-    pub fn build(&self) -> RouteBuilder {
+    pub fn path(&mut self, path: &'static str) -> RouteBuilder {
         RouteBuilder {
             domain: None,
             verb: Verb::Get,
-            path: None,
+            path: path,
+            router: self,
         }
     }
 
@@ -261,10 +249,13 @@ mod test {
     #[test]
     pub fn test_route_builder() {
         let mut router = Router::new();
-        router.build()
-            .domain("domain.com")
-            .verb(Verb::Post)
-            .path("/hello/world")
-            .apply(&mut router);
+        assert_eq!(
+            router
+                .path("/hello/world")
+                .domain("domain.com")
+                .verb(Verb::Post)
+                .route(),
+            Ok(())
+        );
     }
 }
