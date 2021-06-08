@@ -42,6 +42,42 @@ pub struct Route {
     verb: Verb,
 }
 
+pub struct RouteBuilder {
+    domain: Option<&'static str>,
+    verb: Verb,
+    path: Option<&'static str>,
+}
+
+impl RouteBuilder {
+    pub fn domain(&self, domain: &'static str) -> RouteBuilder {
+        RouteBuilder {
+            domain: Some(domain),
+            verb: self.verb.clone(),
+            path: self.path.clone(),
+        }
+    }
+
+    pub fn verb(&self, verb: Verb) -> RouteBuilder {
+        RouteBuilder {
+            domain: self.domain.clone(),
+            verb: verb,
+            path: self.path.clone(),
+        }
+    }
+
+    pub fn path(&self, path: &'static str) -> RouteBuilder {
+        RouteBuilder {
+            domain: self.domain.clone(),
+            verb: self.verb.clone(),
+            path: Some(path),
+        }
+    }
+
+    pub fn apply(&mut self, router: &mut Router) {
+        router.route(self.domain.clone(), self.verb.clone(), self.path.unwrap().clone());
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Router {
     routes: HashMap<RouteKey, Route>,
@@ -51,6 +87,14 @@ impl Router {
     pub fn new() -> Router {
         Router {
             routes: HashMap::new(),
+        }
+    }
+
+    pub fn build(&self) -> RouteBuilder {
+        RouteBuilder {
+            domain: None,
+            verb: Verb::Get,
+            path: None,
         }
     }
 
@@ -212,5 +256,15 @@ mod test {
             router.route(Some("googl e.com"), Verb::Get, "/path"),
             Ok(())
         );
+    }
+
+    #[test]
+    pub fn test_route_builder() {
+        let mut router = Router::new();
+        router.build()
+            .domain("domain.com")
+            .verb(Verb::Post)
+            .path("/hello/world")
+            .apply(&mut router);
     }
 }
