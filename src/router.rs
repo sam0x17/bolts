@@ -2,6 +2,38 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::*;
 use std::hash::*;
+use std::ops::Index;
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum UrlParam {
+    String(String),
+    Int(i64),
+    Float(f64),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct UrlParams {
+    hashmap: HashMap<&'static str, UrlParam>,
+}
+
+impl Index<&'static str> for UrlParams {
+    type Output = UrlParam;
+    fn index(&self, key: &'static str) -> &Self::Output {
+        &self.hashmap[key]
+    }
+}
+
+impl UrlParams {
+    pub fn new() -> Self {
+        UrlParams {
+            hashmap: HashMap::new(),
+        }
+    }
+
+    pub fn add(&mut self, key: &'static str, value: UrlParam) {
+        self.hashmap.insert(key, value);
+    }
+}
 
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub enum Verb {
@@ -257,5 +289,16 @@ mod test {
                 .route(),
             Ok(())
         );
+    }
+
+    #[test]
+    pub fn test_url_parameters() {
+        let mut params = UrlParams::new();
+        params.add("id", UrlParam::Int(36));
+        params.add("name", UrlParam::String("sam".to_string()));
+        params.add("score", UrlParam::Float(33.24));
+        assert_eq!(params["id"], UrlParam::Int(36));
+        assert_eq!(params["name"], UrlParam::String("sam".to_string()));
+        assert_eq!(params["score"], UrlParam::Float(33.24));
     }
 }
