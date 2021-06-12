@@ -5,6 +5,44 @@ use std::hash::*;
 use std::ops::Index;
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum GetParam {
+    String(String),
+    Int(i64),
+    Float(f64),
+    Bool(bool),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct GetParams {
+    hashmap: HashMap<String, GetParam>,
+}
+
+impl Index<&String> for GetParams {
+    type Output = GetParam;
+    fn index(&self, key: &String) -> &Self::Output {
+        &self.hashmap[key]
+    }
+}
+
+impl GetParams {
+    pub fn new() -> Self {
+        GetParams {
+            hashmap: HashMap::new(),
+        }
+    }
+
+    pub fn add(&mut self, key: String, value: GetParam) {
+        self.hashmap.insert(key, value);
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Params {
+    vars: UrlParams,
+    get: GetParams,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum UrlParam {
     String(String),
     Int(i64),
