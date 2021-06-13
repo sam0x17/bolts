@@ -5,7 +5,7 @@ use std::hash::*;
 use std::ops::Index;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum GetParam {
+pub enum VerbParam {
     String(String),
     Int(i64),
     Float(f64),
@@ -13,33 +13,38 @@ pub enum GetParam {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct GetParams {
-    hashmap: HashMap<String, GetParam>,
+pub struct VerbParams {
+    hashmap: HashMap<String, VerbParam>,
 }
 
-impl Index<&String> for GetParams {
-    type Output = GetParam;
+impl Index<&String> for VerbParams {
+    type Output = VerbParam;
     fn index(&self, key: &String) -> &Self::Output {
         &self.hashmap[key]
     }
 }
 
-impl GetParams {
+impl VerbParams {
     pub fn new() -> Self {
-        GetParams {
+        VerbParams {
             hashmap: HashMap::new(),
         }
     }
 
-    pub fn add(&mut self, key: String, value: GetParam) {
+    pub fn add(&mut self, key: String, value: VerbParam) {
         self.hashmap.insert(key, value);
     }
 }
 
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Params {
     vars: UrlParams,
-    get: GetParams,
+    post: VerbParams,
+    get: VerbParams,
+    put: VerbParams,
+    patch: VerbParams,
+    delete: VerbParams,
 }
 
 #[derive(Debug, PartialEq, Clone)]
