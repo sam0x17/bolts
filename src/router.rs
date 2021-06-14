@@ -43,7 +43,7 @@ pub enum Render {
     Json(String),
 }
 
-pub type Endpoint = fn(&UrlParams, VerbParams, VerbParams) -> Render;
+pub type Endpoint = fn(&UrlParams, &VerbParams, &VerbParams) -> Render;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UrlParam {
@@ -108,11 +108,12 @@ pub struct RouteKey {
     verb: Verb,
 }
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq)]
+#[derive(Clone)]
 pub struct Route {
     domain: Option<String>,
     vars: Vec<RouteVar>,
     verb: Verb,
+    target: Endpoint,
 }
 
 pub struct RouteBuilder<'a> {
@@ -158,12 +159,12 @@ impl<'a> RouteBuilder<'a> {
         self
     }
 
-    pub fn route(self) -> Result<(), &'static str> {
-        self.router.route(self.domain, self.verb, self.path)
+    pub fn route(self, target: Endpoint) -> Result<(), &'static str> {
+        self.router.route(self.domain, self.verb, self.path, target)
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Clone)]
 pub struct Router {
     routes: HashMap<RouteKey, Route>,
 }
@@ -193,6 +194,7 @@ impl Router {
         domain: Option<&'static str>,
         verb: Verb,
         path: &'static str,
+        target: Endpoint,
     ) -> Result<(), &'static str> {
         lazy_static! {
             static ref REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
@@ -226,6 +228,7 @@ impl Router {
             domain: domain,
             vars: Vec::new(),
             verb: verb,
+            target: target,
         };
         for token in path.split('/') {
             if token.len() == 0 {
@@ -265,18 +268,28 @@ impl Router {
 mod test {
     use super::*;
 
+    fn target(_url: &UrlParams, _get: &VerbParams, _post: &VerbParams) -> Render {
+        Render::Plain("this is a test".to_string())
+    }
+
     #[test]
     fn test_route_requires_leading_slash() {
         let mut router = Router::new();
-        assert_ne!(router.route(None, Verb::Get, "this/is/a/test"), Ok(()));
+        assert_ne!(
+            router.route(None, Verb::Get, "this/is/a/test", target),
+            Ok(())
+        );
     }
 
     #[test]
     fn test_route_trailing_slash_optional() {
         let mut router = Router::new();
-        assert_eq!(router.route(None, Verb::Get, "/this/is/a/test/"), Ok(()));
         assert_eq!(
-            router.route(None, Verb::Get, "/this/is/another/test"),
+            router.route(None, Verb::Get, "/this/is/a/test/", target),
+            Ok(())
+        );
+        assert_eq!(
+            router.route(None, Verb::Get, "/this/is/another/test", target),
             Ok(())
         );
     }
@@ -284,15 +297,21 @@ mod test {
     #[test]
     fn test_route_trailing_slash_non_trailing_slash_equivalent() {
         let mut router = Router::new();
-        assert_eq!(router.route(None, Verb::Get, "/this/is/a/test/"), Ok(()));
-        assert_ne!(router.route(None, Verb::Get, "/this/is/a/test"), Ok(()));
+        assert_eq!(
+            router.route(None, Verb::Get, "/this/is/a/test/", target),
+            Ok(())
+        );
+        assert_ne!(
+            router.route(None, Verb::Get, "/this/is/a/test", target),
+            Ok(())
+        );
     }
 
     #[test]
     fn test_route_parses_parts() {
         let mut router = Router::new();
         router
-            .route(None, Verb::Patch, "/some/#string/cool/;f/:id/:id2")
+            .route(None, Verb::Patch, "/some/#string/cool/;f/:id/:id2", target)
             .unwrap();
         let routes = router.routes();
         assert_eq!(routes.len(), 1);
@@ -310,7 +329,7 @@ mod test {
         let mut router = Router::new();
         let domain = "my-cool-domain.co.uk";
         router
-            .route(Some(domain), Verb::Post, "/some/path")
+            .route(Some(domain), Verb::Post, "/some/path", target)
             .unwrap();
         let route = router.routes().nth(0).unwrap();
         assert_eq!(route.verb, Verb::Post);
@@ -323,7 +342,7 @@ mod test {
         let mut router = Router::new();
         let domain = "*.staging.mysite.something.com";
         router
-            .route(Some(domain), Verb::Post, "/some/path")
+            .route(Some(domain), Verb::Post, "/some/path", target)
             .unwrap();
         let route = router.routes().nth(0).unwrap();
         assert_eq!(route.verb, Verb::Post);
@@ -334,12 +353,21 @@ mod test {
     #[test]
     pub fn test_domain_rejection() {
         let mut router = Router::new();
-        assert_ne!(router.route(Some(".bad.com"), Verb::Get, "/p"), Ok(()));
-        assert_ne!(router.route(Some(" bad.com"), Verb::Get, "/path"), Ok(()));
-        assert_ne!(router.route(Some("."), Verb::Get, "/path"), Ok(()));
-        assert_ne!(router.route(Some(".com"), Verb::Get, "/path"), Ok(()));
         assert_ne!(
-            router.route(Some("googl e.com"), Verb::Get, "/path"),
+            router.route(Some(".bad.com"), Verb::Get, "/p", target),
+            Ok(())
+        );
+        assert_ne!(
+            router.route(Some(" bad.com"), Verb::Get, "/path", target),
+            Ok(())
+        );
+        assert_ne!(router.route(Some("."), Verb::Get, "/path", target), Ok(()));
+        assert_ne!(
+            router.route(Some(".com"), Verb::Get, "/path", target),
+            Ok(())
+        );
+        assert_ne!(
+            router.route(Some("googl e.com"), Verb::Get, "/path", target),
             Ok(())
         );
     }
@@ -352,10 +380,10 @@ mod test {
                 .path("/hello/world")
                 .domain("domain.com")
                 .verb(Verb::Post)
-                .route(),
+                .route(target),
             Ok(())
         );
-        assert_eq!(router.path("/hello").get().route(), Ok(()));
+        assert_eq!(router.path("/hello").get().route(target), Ok(()));
     }
 
     #[test]
