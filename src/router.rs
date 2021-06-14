@@ -17,9 +17,9 @@ pub struct VerbParams {
     hashmap: HashMap<String, VerbParam>,
 }
 
-impl Index<&String> for VerbParams {
+impl Index<&'static str> for VerbParams {
     type Output = VerbParam;
-    fn index(&self, key: &String) -> &Self::Output {
+    fn index(&self, key: &'static str) -> &Self::Output {
         &self.hashmap[key]
     }
 }
@@ -36,15 +36,14 @@ impl VerbParams {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Params {
-    url: UrlParams,
-    post: VerbParams,
-    get: VerbParams,
-    put: VerbParams,
-    patch: VerbParams,
-    delete: VerbParams,
+pub enum Render {
+    Plain(String),
+    File(String, String),
+    Mime(String, String),
+    Json(String),
 }
+
+pub type Endpoint = fn(&UrlParams, VerbParams, VerbParams) -> Render;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UrlParam {
