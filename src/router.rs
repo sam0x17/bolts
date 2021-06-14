@@ -38,7 +38,7 @@ impl VerbParams {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Params {
-    vars: UrlParams,
+    url: UrlParams,
     post: VerbParams,
     get: VerbParams,
     put: VerbParams,
