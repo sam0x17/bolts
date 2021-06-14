@@ -36,7 +36,6 @@ impl VerbParams {
     }
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct Params {
     vars: UrlParams,
@@ -132,6 +131,31 @@ impl<'a> RouteBuilder<'a> {
 
     pub fn verb(mut self, verb: Verb) -> RouteBuilder<'a> {
         self.verb = verb;
+        self
+    }
+
+    pub fn post(mut self) -> RouteBuilder<'a> {
+        self.verb = Verb::Post;
+        self
+    }
+
+    pub fn get(mut self) -> RouteBuilder<'a> {
+        self.verb = Verb::Get;
+        self
+    }
+
+    pub fn put(mut self) -> RouteBuilder<'a> {
+        self.verb = Verb::Put;
+        self
+    }
+
+    pub fn patch(mut self) -> RouteBuilder<'a> {
+        self.verb = Verb::Patch;
+        self
+    }
+
+    pub fn delete(mut self) -> RouteBuilder<'a> {
+        self.verb = Verb::Delete;
         self
     }
 
@@ -332,6 +356,7 @@ mod test {
                 .route(),
             Ok(())
         );
+        assert_eq!(router.path("/hello").get().route(), Ok(()));
     }
 
     #[test]
