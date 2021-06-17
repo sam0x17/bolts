@@ -3,8 +3,8 @@ Bolts is a fast, safe web framework for the Rust language inspired loosely by
 Ruby on Rails. Bolts is under active development, with the following planned
 features (subject to change):
 * fast, powerful, and safe, with sane defaults for everything
-* built-in super-fast and safe routing system, including subdomain/domain-based
-  routing, automatic parsing of URL parameters, etc
+* routing system, including subdomain/domain-based routing, automatic parsing
+  of URL parameters, etc.
 * simple MVC based application layout for basic projects
 * templating system for server-side-rendered layouts
 * well defined environments (i.e. `development`, `test`, `staging`, `production`)
