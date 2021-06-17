@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Sam Johnson <sam@durosoft.com>"]
 edition = "2018"
 license = "MIT"
+description = "A fast, safe, powerful web framework based on the principle of least confusion and sane defaults."
+repository = "https://github.com/sam0x17/bolts"
+homepage = "https://github.com/sam0x17/bolts"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
