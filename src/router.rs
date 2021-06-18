@@ -108,6 +108,12 @@ pub struct RouteKey {
     verb: Verb,
 }
 
+// impl RouteKey {
+//     pub from_path() -> RouteKey {
+
+//     }
+// }
+
 #[derive(Clone)]
 pub struct Route {
     domain: Option<String>,
@@ -169,12 +175,27 @@ pub struct Router {
     routes: HashMap<RouteKey, Route>,
 }
 
+lazy_static! {
+    static ref PATH_REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
+}
+lazy_static! {
+    static ref DOM_REG_SIMPLE: Regex = Regex::new(r"\A([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
+}
+lazy_static! {
+    static ref DOM_REG_WILDCARD: Regex =
+        Regex::new(r"\A\*\.([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
+}
+
 impl Router {
     pub fn new() -> Router {
         Router {
             routes: HashMap::new(),
         }
     }
+
+    // pub fn match(&self, method: Verb, url: String) -> Endpoint {
+    //     // TODO: must construct RouteKey from url
+    // }
 
     pub fn path(&mut self, path: &'static str) -> RouteBuilder {
         RouteBuilder {
@@ -196,17 +217,7 @@ impl Router {
         path: &'static str,
         target: Endpoint,
     ) -> Result<(), &'static str> {
-        lazy_static! {
-            static ref REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
-        }
-        lazy_static! {
-            static ref DOM_REG_SIMPLE: Regex = Regex::new(r"\A([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
-        }
-        lazy_static! {
-            static ref DOM_REG_WILDCARD: Regex =
-                Regex::new(r"\A\*\.([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
-        }
-        if !REG.is_match(path) {
+        if !PATH_REG.is_match(path) {
             return Err("invalid route format!");
         }
         let domain = match domain {
