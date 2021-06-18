@@ -4,6 +4,16 @@ use std::collections::*;
 use std::hash::*;
 use std::ops::Index;
 
+lazy_static! {
+    static ref PATH_REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
+}
+lazy_static! {
+    static ref DOM_REG_SIMPLE: Regex = Regex::new(r"\A([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
+}
+lazy_static! {
+    static ref DOM_REG_WILDCARD: Regex = Regex::new(r"\A\*\.([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum VerbParam {
     String(String),
@@ -108,11 +118,59 @@ pub struct RouteKey {
     verb: Verb,
 }
 
-// impl RouteKey {
-//     pub from_path() -> RouteKey {
+impl RouteKey {
+    pub fn from_path(verb: Verb, path: &String) -> Result<RouteKey, &'static str> {
+        RouteKey::new(verb, path, None)
+    }
 
-//     }
-// }
+    pub fn new(
+        verb: Verb,
+        path: &String,
+        domain: Option<&String>,
+    ) -> Result<RouteKey, &'static str> {
+        if !PATH_REG.is_match(path) {
+            return Err("invalid route format!");
+        }
+        let domain = match domain {
+            Some(dom) => {
+                let dom = dom.to_lowercase();
+                if !DOM_REG_SIMPLE.is_match(&dom) && !DOM_REG_WILDCARD.is_match(&dom) {
+                    return Err("invalid domain!");
+                }
+                Some(dom.to_string())
+            }
+            None => None,
+        };
+        let mut route_key = RouteKey {
+            domain: domain.clone(),
+            parts: Vec::new(),
+            verb: verb.clone(),
+        };
+        for token in path.split('/') {
+            if token.len() == 0 {
+                continue;
+            }
+            match token.chars().nth(0).unwrap() {
+                ':' => {
+                    // integer var
+                    route_key.parts.push(RoutePart::Int);
+                }
+                '#' => {
+                    // string var
+                    route_key.parts.push(RoutePart::String);
+                }
+                ';' => {
+                    // float var
+                    route_key.parts.push(RoutePart::Float);
+                }
+                _ => {
+                    route_key.parts.push(RoutePart::Path(token.to_string()));
+                }
+            }
+        }
+        Ok(route_key)
+    }
+}
 
 #[derive(Clone)]
 pub struct Route {
@@ -173,17 +231,6 @@ impl<'a> RouteBuilder<'a> {
 #[derive(Clone)]
 pub struct Router {
     routes: HashMap<RouteKey, Route>,
-}
-
-lazy_static! {
-    static ref PATH_REG: Regex = Regex::new(r"\A(/[^;#:\s/]+|/[:#;][^;#:\s/]+)*/?\z").unwrap();
-}
-lazy_static! {
-    static ref DOM_REG_SIMPLE: Regex = Regex::new(r"\A([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
-}
-lazy_static! {
-    static ref DOM_REG_WILDCARD: Regex =
-        Regex::new(r"\A\*\.([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
 }
 
 impl Router {
