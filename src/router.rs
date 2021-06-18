@@ -104,7 +104,7 @@ enum RouteVar {
 }
 
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
-enum RoutePart {
+pub enum RoutePart {
     Path(String),
     Int,
     Float,
@@ -119,6 +119,18 @@ pub struct RouteKey {
 }
 
 impl RouteKey {
+    pub fn verb(&self) -> Verb {
+        self.verb.clone()
+    }
+
+    pub fn parts(&self) -> &Vec<RoutePart> {
+        &self.parts
+    }
+
+    pub fn domain(&self) -> &Option<String> {
+        &self.domain
+    }
+
     pub fn from_path(verb: Verb, path: &String) -> Result<RouteKey, &'static str> {
         RouteKey::new(verb, path, None)
     }
@@ -453,5 +465,28 @@ mod test {
         assert_eq!(params["id"], UrlParam::Int(36));
         assert_eq!(params["name"], UrlParam::String("sam".to_string()));
         assert_eq!(params["score"], UrlParam::Float(33.24));
+    }
+
+    #[test]
+    pub fn test_route_key_from_path() {
+        let key = RouteKey::from_path(Verb::Get, &"/contact/:id".to_string()).unwrap();
+        assert_eq!(key.verb(), Verb::Get);
+        assert_eq!(*key.domain(), None);
+        assert_eq!(key.parts()[0], RoutePart::Path("contact".to_string()));
+        assert_eq!(key.parts()[1], RoutePart::Int);
+    }
+
+    #[test]
+    pub fn test_route_key_from_path_with_domain() {
+        let key = RouteKey::new(
+            Verb::Get,
+            &"/contact/:id".to_string(),
+            Some(&"domain.com".to_string()),
+        )
+        .unwrap();
+        assert_eq!(key.verb(), Verb::Get);
+        assert_eq!(*key.domain(), Some("domain.com".to_string()));
+        assert_eq!(key.parts()[0], RoutePart::Path("contact".to_string()));
+        assert_eq!(key.parts()[1], RoutePart::Int);
     }
 }
