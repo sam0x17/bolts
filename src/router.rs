@@ -252,9 +252,16 @@ impl Router {
         }
     }
 
-    // pub fn match(&self, method: Verb, url: String) -> Endpoint {
-    //     // TODO: must construct RouteKey from url
-    // }
+    pub fn find(&self, verb: Verb, path: &String, domain: Option<&String>) -> Option<Endpoint> {
+        let key = match RouteKey::new(verb, path, domain) {
+            Ok(k) => k,
+            _ => return None,
+        };
+        match self.routes.get(&key) {
+            Some(route) => Some(route.target),
+            None => None,
+        }
+    }
 
     pub fn path(&mut self, path: &'static str) -> RouteBuilder {
         RouteBuilder {
