@@ -151,3 +151,28 @@ pub fn test_route_key_from_path_with_domain() {
     assert_eq!(key.parts[0], RoutePart::Path("contact".to_string()));
     assert_eq!(key.parts[1], RoutePart::Int);
 }
+
+#[test]
+pub fn test_router_find() {
+    let mut router = Router::new();
+    router
+        .path("/hello/world")
+        .domain("domain.com")
+        .verb(Verb::Post)
+        .route(target)
+        .unwrap();
+    router
+        .path("/hello/puppet")
+        .domain("domain.com")
+        .verb(Verb::Patch)
+        .route(target)
+        .unwrap();
+    router
+        .path("/goodbye/:id")
+        .verb(Verb::Delete)
+        .route(target)
+        .unwrap();
+    router.find(Verb::Post, &("/hello/world".to_string()), Some(&("domain.com".to_string()))).unwrap();
+    router.find(Verb::Patch, &("/hello/puppet".to_string()), Some(&("domain.com".to_string()))).unwrap();
+    router.find(Verb::Delete, &("/goodbye/33".to_string()), None).unwrap();
+}
