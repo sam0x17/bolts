@@ -242,12 +242,14 @@ impl<'a> RouteBuilder<'a> {
 #[derive(Clone)]
 pub struct Router {
     routes: HashMap<RouteKey, Route>,
+    svar_routes: Vec<(RouteKey, Route)>,
 }
 
 impl Router {
     pub fn new() -> Router {
         Router {
             routes: HashMap::new(),
+            svar_routes: Vec::new(),
         }
     }
 
@@ -258,7 +260,13 @@ impl Router {
         };
         match self.routes.get(&key) {
             Some(route) => Some(route.target),
-            None => None,
+            None => {
+                for route in self.svar_routes.iter() {
+                    // TODO: actually make a regex for each one and store that in tuple
+                    // then check all regexes in this loop
+                }
+                None
+            }
         }
     }
 
@@ -273,6 +281,10 @@ impl Router {
 
     pub fn routes(&self) -> hash_map::Values<'_, RouteKey, Route> {
         self.routes.values()
+    }
+
+    pub fn string_var_routes(&self) -> &Vec<(RouteKey, Route)> {
+        &self.svar_routes
     }
 
     pub fn route(
@@ -306,6 +318,7 @@ impl Router {
             verb: verb,
             target: target,
         };
+        let mut has_string_vars = false;
         for token in path.split('/') {
             if token.len() == 0 {
                 continue;
@@ -320,6 +333,7 @@ impl Router {
                     // string var
                     route_key.parts.push(RoutePart::String);
                     route.vars.push(RouteVar::String(&token[1..]));
+                    has_string_vars = true;
                 }
                 ';' => {
                     // float var
@@ -335,6 +349,9 @@ impl Router {
         self.routes.insert(route_key, route);
         if size != self.routes.len() - 1 {
             return Err("a route identical to this one has already been defined!");
+        }
+        if has_string_vars {
+            self.svar_routes.push((route_key.clone(), route.clone()));
         }
         Ok(())
     }
