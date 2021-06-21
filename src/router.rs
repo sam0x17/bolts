@@ -13,6 +13,15 @@ lazy_static! {
 lazy_static! {
     static ref DOM_REG_WILDCARD: Regex = Regex::new(r"\A\*\.([^\.\*\s]+\.[^\.\s]+)+\z").unwrap();
 }
+lazy_static! {
+    static ref VAR_INT: Regex = Regex::new(r"\A\-?[0-9]*\z").unwrap();
+}
+lazy_static! {
+    static ref VAR_FLOAT: Regex = Regex::new(r"\A\-?[0-9]*\.[0-9]*\z").unwrap();
+}
+lazy_static! {
+    static ref VAR_STRING: Regex = Regex::new(r"\A[^/\s]*\z").unwrap();
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum VerbParam {
@@ -162,22 +171,12 @@ impl RouteKey {
             if token.len() == 0 {
                 continue;
             }
-            match token.chars().nth(0).unwrap() {
-                ':' => {
-                    // integer var
-                    route_key.parts.push(RoutePart::Int);
-                }
-                '#' => {
-                    // string var
-                    route_key.parts.push(RoutePart::String);
-                }
-                ';' => {
-                    // float var
-                    route_key.parts.push(RoutePart::Float);
-                }
-                _ => {
-                    route_key.parts.push(RoutePart::Path(token.to_string()));
-                }
+            if VAR_INT.is_match(&token) {
+                route_key.parts.push(RoutePart::Int);
+            } else if VAR_FLOAT.is_match(&token) {
+                route_key.parts.push(RoutePart::Float);
+            } else {
+                route_key.parts.push(RoutePart::Path(token.to_string()));
             }
         }
         Ok(route_key)

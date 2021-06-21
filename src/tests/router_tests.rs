@@ -131,7 +131,7 @@ pub fn test_url_parameters() {
 
 #[test]
 pub fn test_route_key_from_path() {
-    let key = RouteKey::from_path(Verb::Get, &"/contact/:id".to_string()).unwrap();
+    let key = RouteKey::from_path(Verb::Get, &"/contact/37".to_string()).unwrap();
     assert_eq!(key.verb, Verb::Get);
     assert_eq!(key.domain, None);
     assert_eq!(key.parts[0], RoutePart::Path("contact".to_string()));
@@ -142,7 +142,7 @@ pub fn test_route_key_from_path() {
 pub fn test_route_key_from_path_with_domain() {
     let key = RouteKey::new(
         Verb::Get,
-        &"/contact/:id".to_string(),
+        &"/contact/33".to_string(),
         Some(&"domain.com".to_string()),
     )
     .unwrap();
@@ -170,6 +170,11 @@ pub fn test_router_find() {
     router
         .path("/goodbye/:id")
         .verb(Verb::Delete)
+        .route(target)
+        .unwrap();
+    router
+        .path("/some/cool/#token")
+        .verb(Verb::Get)
         .route(target)
         .unwrap();
     router.find(Verb::Post, &("/hello/world".to_string()), Some(&("domain.com".to_string()))).unwrap();
