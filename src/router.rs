@@ -264,6 +264,7 @@ impl Router {
                 for route in self.svar_routes.iter() {
                     // TODO: actually make a regex for each one and store that in tuple
                     // then check all regexes in this loop
+                    // \A(?:aa)\z|\A(?:bb)\z|\A(?:cc)\z
                 }
                 None
             }
